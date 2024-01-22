@@ -316,9 +316,10 @@ if __name__=="__main__":
                 with open(a.scan_db,"r") as f:
                     scan_db=json.load(f)
                     f.close()
+                print("updating the scan data base {}".format(a.scan_db))
             else:
                 scan_db={}
-            print("updating the scan data base {}".format(a.scan_db))
+                print("creating a new scan data base {}".format(a.scan_db))
             if a.outfile in scan_db and not a.overwrite:
                 print("the entry {} exists in the scan data base {}"\
                       .format(a.outfile,a.scan_db))
@@ -356,6 +357,7 @@ if __name__=="__main__":
                                 "patient":patient,
                                 "scanner":scanner}
     
+            print("writing the scan data base")
             with open(a.scan_db,"w") as f:
                 json.dump(scan_db,f,sort_keys=True,indent=4)
                 f.close()
