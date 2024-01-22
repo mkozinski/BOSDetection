@@ -10,7 +10,6 @@ from scipy.ndimage import zoom
 from pydicom import dcmread
 from pydicom.errors import InvalidDicomError
 
-
 from datetime import date
 
 def preselect(dcm):
