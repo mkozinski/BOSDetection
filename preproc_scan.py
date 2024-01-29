@@ -357,7 +357,7 @@ if __name__=="__main__":
                                 "patient":patient,
                                 "scanner":scanner}
     
-            print("writing the scan data base")
+            print("writing the scan data base to {}".format(a.scan_db))
             with open(a.scan_db,"w") as f:
                 json.dump(scan_db,f,sort_keys=True,indent=4)
                 f.close()

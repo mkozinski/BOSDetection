@@ -9,10 +9,10 @@ from myMaxPool import MyMaxPool
         
 class MyNet(nn.Module):
 
-  def __init__(self, preTrainedFeatureExtractor=False):
+  def __init__(self, pretrainedFeatureExtractor=False):
     super(MyNet,self).__init__()
 
-    self.feature_extractor=resnet18(pretrained=preTrainedFeatureExtractor)
+    self.feature_extractor=resnet18(pretrained=pretrainedFeatureExtractor)
     # remove the final pooling and fc layers from the resnet
     self.nfeatures=self.feature_extractor.fc.weight.shape[-1]
     self.feature_extractor.fc     =nn.Identity()
