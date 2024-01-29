@@ -16,7 +16,7 @@ sys.path.append("../")
 from NetworkTraining.loggerBasic import LoggerBasic
 from NetworkTraining.loggerF1 import LoggerF1
 from NetworkTraining.loggerGeneric import LoggerGeneric
-from NetworkTraining.loggerComposit import LoggerComposit
+from NetworkTraining.loggerComposite import LoggerComposite
 from NetworkTraining.crop import crop
 from NetworkTraining.trainer import trainer
 from NetworkTraining.dataLoaderComposite import DataLoaderComposite
@@ -194,7 +194,7 @@ if __name__ == '__main__':
       (o[bs_classif:].detach(),t[bs_classif:],min_days_diff).cpu().item())
   logger_train_classif    =LoggerF1(a.log_dir,"train_classif",
     lambda i,l:f1_preproc_classif(i,l,bs_classif))
-  logger_train=LoggerComposit(
+  logger_train=LoggerComposite(
     [logger_train_basic,logger_train_precedence,logger_train_classif,])
   
   # training

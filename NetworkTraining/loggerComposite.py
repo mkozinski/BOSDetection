@@ -1,4 +1,4 @@
-class LoggerComposit:
+class LoggerComposite:
     def __init__(self, loggers):
         self.loggers=loggers
 

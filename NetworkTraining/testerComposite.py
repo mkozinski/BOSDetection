@@ -1,4 +1,4 @@
-class testerComposit:
+class testerComposite:
 
   def __init__(self, testers):
     self.testers=testers
