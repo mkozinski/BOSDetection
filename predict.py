@@ -8,7 +8,7 @@ import json
 import argparse
 
 sys.path.append("../")
-from NetworkTraining_py.crop import crop
+from NetworkTraining.crop import crop
 
 sys.path.append("./")
 from net import MyNet
@@ -45,8 +45,8 @@ def getInput(fname):
     return inp
 
 def getNet(path,cuda):
-    net=MyNet(preTrainedFeatureExtractor=False) 
-    state_dict=torch.load(path)
+    net=MyNet(pretrainedFeatureExtractor=False) 
+    state_dict=torch.load(path)["state_dict"]
     net.load_state_dict(state_dict)
     net.eval()
     if cuda:

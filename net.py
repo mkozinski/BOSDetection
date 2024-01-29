@@ -19,7 +19,7 @@ class MyNet(nn.Module):
     self.feature_extractor.avgpool=nn.Identity()
 
     # max pooling with randomly dropping voxels
-    self.pool=MyMaxPool(0.25)
+    self.pool=MyMaxPool(0.02)
 
     self.linear    =nn.Linear(self.nfeatures,1)
 

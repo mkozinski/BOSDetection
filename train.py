@@ -13,17 +13,18 @@ import numpy as np
 
 import sys
 sys.path.append("../")
-from NetworkTraining_py.loggerBasic import LoggerBasic
-from NetworkTraining_py.loggerF1 import LoggerF1
-from NetworkTraining_py.loggerComposit import LoggerComposit
-from NetworkTraining_py.crop import crop
-from NetworkTraining_py.trainer import trainer
+from NetworkTraining.loggerBasic import LoggerBasic
+from NetworkTraining.loggerF1 import LoggerF1
+from NetworkTraining.loggerGeneric import LoggerGeneric
+from NetworkTraining.loggerComposit import LoggerComposit
+from NetworkTraining.crop import crop
+from NetworkTraining.trainer import trainer
+from NetworkTraining.dataLoaderComposite import DataLoaderComposite
 
 from net import MyNet
 
 from get_data_loaders import getPrecedenceDataLoader,\
                              getClassifDataLoader
-from dataLoaderComposite import DataLoaderComposite
 
 def augmentTrain(trainimg,trainlbl,nslices):
   img=trainimg
@@ -67,25 +68,6 @@ def preproc(img,lbl):
   # this is needed to avoid transfer of data to GPU in threads of the dataloader
   return img.cuda(), lbl.cuda()
 
-def f1_preproc_precedence(output,target,bs_start,days_diff):
-  # preprocessing for test logger
-
-  output=output[bs_start:]
-  date  =target[bs_start:]
-
-  datediff=(date[0::2]-date[1::2])
-  ignore= (-days_diff < datediff) & (datediff < days_diff)
-  assert torch.all(ignore==0)
-
-  t=datediff >= days_diff
-  
-  diff=output[::2]-output[1::2] 
-
-  e=torch.exp(diff)
-  p=e/(e+1.0)
-
-  return p.cpu(),t.cpu()
-
 def f1_preproc_classif(output,target,bs_stop):
   # preprocessing for test logger
 
@@ -104,47 +86,34 @@ def loadfun(fname):
   fullname=path.join(a.root_dir,fname)
   return np.load(fullname,mmap_mode='r')
 
-class PrecedenceLoss(nn.Module):
+def precedenceLoss(x,y,min_days_diff):
+  x=x.reshape(x.shape[0]//2,2)
+  y=y.reshape(y.shape[0]//2,2)
+  days_diff=(y[:,1]-y[:,0])
 
-  def __init__(self,days_diff):
-    super(PrecedenceLoss,self).__init__()
-    self.days_diff=days_diff
+  # this should never happen:
+  incorrect = (-min_days_diff < days_diff) & (days_diff < min_days_diff)
+  assert torch.all(incorrect==0)
 
-  def forward(self,x,y):
+  t = days_diff>=min_days_diff
+  ce=nn.functional.cross_entropy(x,t.to(torch.long))
+  return ce 
 
-    datediff=(y[0::2]-y[1::2])
-  
-    ignore= (-self.days_diff < datediff) & (datediff < self.days_diff)
-    assert torch.all(ignore==0)
-
-    t=datediff >= self.days_diff
-    
-    diff=nn.functional.pad(x[::2]-x[1::2],(1,0))
-  
-    ce=nn.functional.cross_entropy(diff,t.to(torch.long))
-
-    return ce 
-
-class ClassifLoss(nn.Module):
-
-  def forward(self,x,y):
-        
-    outp=nn.functional.pad(x,(1,0))
-    assert torch.all(y>=0)
-    ce=nn.functional.cross_entropy(outp,y)
-
-    return ce
+def classifLoss(x,y):
+  assert torch.all(y>=0)
+  pred=nn.functional.pad(x,(1,0))
+  ce=nn.functional.cross_entropy(pred,y)
+  return ce
 
 class TotalLoss(nn.Module):
-  def __init__(self,days_diff,nbatchfirst):
+  def __init__(self,min_days_diff,nbatchclassif):
     super(TotalLoss,self).__init__()
-    self.precedenceLoss=PrecedenceLoss(days_diff)
-    self.classifLoss=ClassifLoss()
-    self.nbatchfirst=nbatchfirst
-
+    self.nbatchclassif=nbatchclassif
+    self.min_days_diff=min_days_diff
   def forward(self,x,y):
-    lclassif=self.classifLoss   (x[:self.nbatchfirst],y[:self.nbatchfirst])
-    lprec=self.precedenceLoss(x[self.nbatchfirst:],y[self.nbatchfirst:])
+    lclassif=classifLoss(x[:self.nbatchclassif],y[:self.nbatchclassif])
+    lprec=precedenceLoss(x[self.nbatchclassif:],y[self.nbatchclassif:],
+      self.min_days_diff)
     return lclassif+lprec
 
 # batch sizes
@@ -153,9 +122,9 @@ bs_precedence=10
 # number of slices to retain from each scan
 nslices=8
 # minimum number of days between scans for the precedence task
-days_diff=182
-training_schedule=[50000,   55000,   60000,   65000]
-learning_rate    =[ 1e-4,(1e-4)/2,(1e-4)/4,(1e-4)/8]
+min_days_diff=182
+training_schedule=[50000,   55000,   60000,   65000, ]
+learning_rate    =[ 1e-4,(1e-4)/2,(1e-4)/4,(1e-4)/8, ]
 
 if __name__ == '__main__':
   
@@ -175,6 +144,31 @@ if __name__ == '__main__':
     json.dump(vars(a),f,indent=4)
     f.close()
   
+  # the deep network and the loss
+  net=MyNet(pretrainedFeatureExtractor=True).cuda()
+  optimizer = optim.Adam(net.parameters(), lr=1e-4, weight_decay=1e-6)
+  start_iter=0
+  start_epoch=0
+  
+  if a.prev_log_dir is not None:
+  
+    netname=path.join(a.prev_log_dir,"net_last.pth")
+    print("loading network {}".format(netname))
+    saved_net=torch.load(netname)
+    net.load_state_dict(saved_net['state_dict'])
+    start_iter=saved_net['iter']
+    start_epoch=saved_net['epoch']
+    del saved_net
+  
+    optfname=path.join(a.prev_log_dir,"optim_last.pth")
+    print("loading optimizer {}".format(optfname))
+    saved_optim=torch.load(optfname)
+    optimizer.load_state_dict(saved_optim['state_dict'])
+    del saved_optim
+  
+  loss=TotalLoss(min_days_diff,bs_classif)
+  
+  # data loaders
   with open(a.scan_db,"r") as f:
     scan_db=json.load(f)
   
@@ -187,51 +181,44 @@ if __name__ == '__main__':
   classif_dl=getClassifDataLoader(scan_db,patient_db,split_map,a.split_num,
     lambda i,l:augmentTrain(i,l,nslices),bs_classif,loadfun,drop_last=True,
     yieldPatientOncePerEpoch=False)
-  precedence_dl=getPrecedenceDataLoader(scan_db,patient_db,split_map,a.split_num,
-    lambda i,l:augmentTrain(i,l,nslices),days_diff,bs_precedence,loadfun,
-    drop_last=True,yieldPatientOncePerEpoch=False)
+  precedence_dl=getPrecedenceDataLoader(scan_db,patient_db,split_map,
+    a.split_num,lambda i,l:augmentTrain(i,l,nslices),min_days_diff,
+    bs_precedence,loadfun,drop_last=True,yieldPatientOncePerEpoch=False)
   train_loader=DataLoaderComposite([classif_dl,precedence_dl])
   
-  net=MyNet(pretrainedFeatureExtractor=True).cuda()
-  optimizer = optim.Adam(net.parameters(), lr=1e-4, weight_decay=1e-6)
-  start_iter=0
-  
-  if a.prev_log_dir is not None:
-  
-    netname=path.join(a.prev_log_dir,"net_last.pth")
-    print("loading {}".format(netname))
-    saved_net=torch.load(netname)
-    net.load_state_dict(saved_net['state_dict'])
-    start_iter=saved_net['iter']
-    del saved_net
-  
-    optfname=path.join(a.prev_log_dir,"optim_last.pth")
-    print("loading {}".format(netname))
-    saved_optim=torch.load(optfname)
-    optimizer.load_state_dict(saved_optim['state_dict'])
-    del saved_optim
-  
-  loss=TotalLoss(days_diff,bs_classif)
-  
-  logger_train_basic = LoggerBasic(a.log_dir,"Basic",1,saveAndKeepEvery=500)
-  logger_train_precedence =LoggerF1(a.log_dir,"train_precedence",
-    lambda i,l:f1_preproc_precedence(i,l,bs_classif,days_diff))
+  # logging; save net every 10 epochs
+  logger_train_basic = LoggerBasic(a.log_dir,"train_basic",saveNetEvery=10, 
+    saveAndKeepEvery=500)
+  logger_train_precedence =LoggerGeneric(a.log_dir,"train_precedence",
+    lambda i,o,t,l,n,op:precedenceLoss
+      (o[bs_classif:].detach(),t[bs_classif:],min_days_diff).cpu().item())
   logger_train_classif    =LoggerF1(a.log_dir,"train_classif",
     lambda i,l:f1_preproc_classif(i,l,bs_classif))
-  logger_train=LoggerComposit([logger_train_basic,logger_train_precedence,logger_train_classif,])
+  logger_train=LoggerComposit(
+    [logger_train_basic,logger_train_precedence,logger_train_classif,])
   
+  # training
   trn=trainer(net, train_loader, optimizer, loss, logger_train, None, None,
     lr_scheduler=None,preprocImgLbl=preproc)
 
   net.train()
   trn.tot_iter=start_iter
+  trn.epoch=start_epoch
+  logger_train_basic.epoch=start_epoch
   while True:
     target_niter_ind=bisect(training_schedule,trn.tot_iter)
     if target_niter_ind>=len(training_schedule):
+      logger_train_basic.save("last.pth", net=trn.net, optim=trn.optimizer,
+        niter=trn.tot_iter)
+      print(("\ntraining terminates with {} iterations scheduled "
+             "and {} iterations executed")\
+            .format(training_schedule[-1],trn.tot_iter))
       break
     target_niter =training_schedule[target_niter_ind]
-    lr           =learning_rate[target_niter_ind]
+    lr =learning_rate[target_niter_ind]
+    iter2run=target_niter-trn.tot_iter
+    print(("\niteration {}: setting the learning rate to {} "
+           "for the next {} iterations").format(trn.tot_iter,lr,iter2run))
     for pg in trn.optimizer.param_groups :
       pg['lr']=lr
-    iter2run=target_niter-trn.tot_iter
     trn.train(iter2run)

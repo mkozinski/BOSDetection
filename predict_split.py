@@ -8,7 +8,7 @@ import json
 import argparse
 
 sys.path.append("../")
-from NetworkTraining_py.crop import crop
+from NetworkTraining.crop import crop
 
 sys.path.append("./")
 from net import MyNet
