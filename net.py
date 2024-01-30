@@ -40,7 +40,7 @@ class MyNet(nn.Module):
     x2d3c=x2d.expand(-1,3,-1,-1)
     # ... which can be processed with a resnet feature extractor
     z2d=self.feature(x2d3c)
-    # recover the slice(depth) dimension
+    # recover the slice(depth) dimension and the spatial dimension
     nc=z2d.shape[1]
     z3d=z2d.reshape(nb,d,nc,-1)
     # put the slice (depth) dimension in its place
