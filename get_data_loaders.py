@@ -10,8 +10,7 @@ from copy import deepcopy
 from itertools import chain
 
 import sys
-sys.path.append("./")
-from simpleDataset import SimpleDataset
+from NetworkTraining.simpleDataset import SimpleDataset
 
 class SamplerPairsPosNeg(Sampler):
 
