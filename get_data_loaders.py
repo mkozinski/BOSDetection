@@ -206,6 +206,8 @@ def getClassifDataLoader(scan_db, patient_db, split_map, split, augmentFun,
 
     def after_bos_onset(scan):
         pat=scan_db[scan]["patient"]
+        if "0.8" not in patient_db[pat]["FEV1_level_dates"]:
+            return False
         onset_date=patient_db[pat]["FEV1_level_dates"]["0.8"]
         scan_date =scan_db[scan]["date"]
         return (date(**scan_date)-date(**onset_date)).days>=0
