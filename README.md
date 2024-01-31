@@ -117,5 +117,5 @@ Scans in DICOM format can be converted to the desired format using the `preproc_
 where:\
    - `root_dir` is the root directory to be prepended to the local path of the output file `out_file`; this root part of the path is not stored in the `scan_database`
    - `outfile` is the local path to the output file in the numpy format
-   - `scan_database` is the path to [the file that contains the information about individual scans](#the-scan-database); if the file exists, it will be updated; if the specific entry already exists, it will not be overwritten unless `--overwrite` has been specified
-   - `patient_id` is the text identifier to be assigned to the patient; the same identifiers need to be used in [the patient data base file](#the-patient-database)
+   - `scan_database` is the path to [the file that contains the information about individual scans](#the-scan-data-base); if the file exists, it will be updated; if the specific entry already exists, it will not be overwritten unless `--overwrite` has been specified
+   - `patient_id` is the text identifier to be assigned to the patient; the same identifiers need to be used in [the patient data base file](#the-patient-data-base)
