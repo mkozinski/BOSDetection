@@ -16,16 +16,16 @@ Training a deep neural network for binary classification of CT scans.
 
 # Getting started
 Test it on synthetic data (the instructions assume Linux/bash shell is used):
-0. Checkout this repository and enter the 
-1. To generate a synthetic data set in the right format \
+1. Checkout this repository and enter the 
+1. To generate a synthetic data set in the right format\
 `python3 generate_random_dataset.py`\
 the script generates a considerable volume of data and might take several minutes to finish...
 2. To verify that the data was successfully generated, view statistics of the synthetic data\
 `python3 print_data_stats.py --db_dir PatientData`
-3. Train on the synthetic data:\
-   - First, create the directory to story the results `mkdir result_v0_syntDataCheck`\
-   - Run training: `(export CUDA_VISIBLE_DEVICES=0 SPLIT=1; python3 train.py ${SPLIT} ./PatientData/scan_database.json ./PatientData/patient_database.json ./PatientData/split_map.json ./PatientData/ result_v0_syntDataCheck/log_split_${SPLIT})`\
-   - The training loss can be observed by plotting the log in file `result_v0_syntDataCheck/log_split_1/log_train_basic.txt`;\
+3. Train on the synthetic data:
+   - Create the directory to story the results `mkdir result_v0_syntDataCheck`
+   - Run training: `(export CUDA_VISIBLE_DEVICES=0 SPLIT=1; python3 train.py ${SPLIT} ./PatientData/scan_database.json ./PatientData/patient_database.json ./PatientData/split_map.json ./PatientData/ result_v0_syntDataCheck/log_split_${SPLIT})`
+   - The training loss can be observed by plotting the log in file `result_v0_syntDataCheck/log_split_1/log_train_basic.txt`;
      with gnuplot: `gnuplot -e "plot \"result_v0_syntDataCheck/log_split_1/log_train_basic.txt\" u 1; pause -1"`
    - Keep the training running for a 100 epochs to observe a decreasing trend in the plot;
    - Interrupt training with `ctr+C`
