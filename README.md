@@ -38,11 +38,11 @@ The script generates a considerable volume of data in the `PatientData` folder. 
 5. Watch the resulting performance using the `analyseResults.ipynb` jupyter notebook
 
 # Training on own CT scans
-We first describe the [data format](#data-format), then discuss [the script for converting dicom data into the desired format](#preproc-script), next introduce the [training script](#training-script) and the [prediction script](#prediction-script), and close this section with a reference to [analysing the results with the included juputer notebook](#analyse-results).
+We first describe the [data format](#data-format), then discuss [the script for converting dicom data into the desired format](#preparing-ct-scans-for-training), next introduce the [training script](#training-script) and the [prediction script](#prediction-script), and close this section with a reference to [analysing the results with the included juputer notebook](#analyse-results).
 
-## Data format {#data-format}
+## Data format
 The training/test data format is best inspected by viewing the synthetic data generated as described above. It comprises:
-1. The scan data base; {#scan-database}\
+### The scan data base
    The scan data base for synthetic data is located in file `PatientData/scan_database.json`; Example entry looks like this:\
    ```
    "patient_19/scan_1995_12_9/scan_0159_copy_00.npy": {
@@ -59,7 +59,7 @@ The training/test data format is best inspected by viewing the synthetic data ge
    -  the field "date" represents the date of scan acquisition;
    -  the field "patient" contains the patient identifier, a string;
    -  the field "scanner" contains the name of the device used to acquire the scan.
- 2. The patient data base; {#patient-database}\
+### The patient data base
     The patient data base for synthetic data is located in file `PatientData/patient_database.json`; Example entries look like this:\
     ```
     "patient_18": {
@@ -99,7 +99,7 @@ The training/test data format is best inspected by viewing the synthetic data ge
    For the patient data base, keys take the form of patient identifiers. The values of dictionary entries are:
    -  the field "label"; 0&rarr; patient that did not develop the diseae; 1&rarr; patient that developed the disease, but early scans might show no symptoms;
    -  for the patients with "label"==1, a field called "FEV1_level_dates", containing the dates at which the patient's lung function decreased below pre-defined levels: 0.9, 0.8, 0.65, 0.5 of the "best value", taken to be the average of two best measurements taken at least 3 weeks apart. In order for the level to be effectively "crossed", the patient had to display a FEV1 measurement below this level on at least two consecutive scans taken at least two weeks apart. If the FEV1 decreased by more than one level, for example, from above 0.8 to below 0.65, the same date was assigned to both crossed levels, in the example, 0.8 and 0.65.
-3. The split map;
+### The split map
   The split map for synthetic data is located in file `PatientData/split_map.json`; Example entries look like this:\
 ```
 "patient_00": 0,
@@ -111,11 +111,11 @@ To each patient identifier, it assigns an integer that denotes the split in whic
 4. The scan files;\
 They take the form of three-dimensional numpy arrays, where the dimensions are in the following order: Vertical (Z), Anterior-Posterior (Y), Medio-Lateral (X); This results in storing transverse slices of a scan in contiguous fragments of the file.
 
-## Preparing CT scans for training {#preproc-script}
+## Preparing CT scans for training
 Scans in DICOM format can be converted to the desired format using the `preproc_scan.py` script. It is called as follows:\
 `python3 preproc_scan.py --root_dir <root_dir> --outfile <out_file.npy> --scan_db <scan_database.json> --patient <patient_id> --infiles <infile_1.dicom> ... <infile_n.dicom>`\
 where:\
    - `root_dir` is the root directory to be prepended to the local path of the output file `out_file`; this root part of the path is not stored in the `scan_database`
    - `outfile` is the local path to the output file in the numpy format
-   - `scan_database` is the path to [the file that contains the information about individual scans](#scan-database); if the file exists, it will be updated; if the specific entry already exists, it will not be overwritten unless `--overwrite` has been specified
-   - `patient_id` is the text identifier to be assigned to the patient; the same identifiers need to be used in [the patient data base file](#patient-database)
+   - `scan_database` is the path to [the file that contains the information about individual scans](#the-scan-database); if the file exists, it will be updated; if the specific entry already exists, it will not be overwritten unless `--overwrite` has been specified
+   - `patient_id` is the text identifier to be assigned to the patient; the same identifiers need to be used in [the patient data base file](#the-patient-database)
