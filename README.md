@@ -151,8 +151,8 @@ where:
 
 The following log files can be monitored during training:
    - `<log_dir>\log_train_basic.txt` contains the total loss function; the average value is reported per epoch.
-   - `<log_dir>\log_train_precedence.txt` contains the loss function computed for the auxiliary temporal precedence prediction task; the average value is reported per epoch;
-   - `<log_dir>\logF1_train_classif.txt` contains the F1/Dice/Czekanowski score for the primary task of scan classification, computed for the entire training set over last training epoch; the first reported value is the score resulting from best threshold, the second value results from applying to the log-likelihood a fixed threshold of 0.
+   - `<log_dir>\log_train_precedence.txt` contains the loss function computed for the auxiliary temporal precedence prediction task; the average value is reported per epoch.
+   - `<log_dir>\logF1_train_classif.txt` contains the F1/Dice/Czekanowski score for the primary task of scan classification, computed for the entire training set over the last training epoch; the first reported value is the score resulting from the best threshold, the second value results from applying a fixed threshold of 0 to the log-likelihood output by the network.
 
 The logged values can be conveniently plotted with gnuplot, for example:\
 `gnuplot -e "set xlabel \"epoch number\"; set ylabel \"loss value\"; set grid; plot \"<log_dir>/log_train_basic.txt\" u 1 t \"total loss\", \"<log_dir>/log_train_precedence.txt\" u 1 t \"precedence loss\"; pause -1"`
