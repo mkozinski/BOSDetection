@@ -38,7 +38,7 @@ The script generates a considerable volume of data in the `PatientData` folder. 
 5. Watch the resulting performance using the `analyseResults.ipynb` jupyter notebook
 
 # Training on own CT scans
-We first describe the [data format](#data-format), then discuss [the script for converting dicom data into the desired format](#preparing-ct-scans-for-training), next introduce the [training script](#training-script) and the [prediction script](#prediction-script), and close this section with a reference to [analysing the results with the included juputer notebook](#analyse-results).
+We first describe the [data format](#data-format), then discuss [the script for converting dicom data into the desired format](#preparing-the-data-for-training), next introduce the [training script](#the-training-script) and the [prediction script](#prediction-script), and close this section with a reference to [analysing the results with the included juputer notebook](#analyse-results).
 
 ## Data format
 The training/test data format is best inspected by viewing the synthetic data generated as described above. It comprises:
@@ -98,7 +98,12 @@ The training/test data format is best inspected by viewing the synthetic data ge
     ```
    For the patient data base, keys take the form of patient identifiers. The values of dictionary entries are:
    -  the field "label"; 0&rarr; patient that did not develop the diseae; 1&rarr; patient that developed the disease, but early scans might show no symptoms;
-   -  for the patients with "label"==1, a field called "FEV1_level_dates", containing the dates at which the patient's lung function decreased below pre-defined levels: 0.9, 0.8, 0.65, 0.5 of the "best value", taken to be the average of two best measurements taken at least 3 weeks apart. In order for the level to be effectively "crossed", the patient had to display a FEV1 measurement below this level on at least two consecutive scans taken at least two weeks apart. If the FEV1 decreased by more than one level, for example, from above 0.8 to below 0.65, the same date was assigned to both crossed levels, in the example, 0.8 and 0.65. If a FEV1 measurement below a certain level was never observed, this level and levels lower than that may be omitted. For example, if the FEV1 level never fell below 0.65, entries with keys '0.65' and '0.5' can be absent from the dictionary.
+   -  for the patients with "label"==1, a field called "FEV1_level_dates", containing the dates at which the patient's lung function decreased below pre-defined levels: 0.9, 0.8, 0.65, 0.5 of the "best value", taken to be the average of two best measurements taken at least 3 weeks apart.
+      - In order for the level to be effectively "crossed", the patient had to display a FEV1 measurement below this level on at least two consecutive scans taken at least two weeks apart.
+      - If the FEV1 decreased by more than one level, for example, from above 0.8 to below 0.65, the same date was assigned to both crossed levels, in the example, 0.8 and 0.65.
+      - If a FEV1 measurement below a certain level was never observed, this level and levels lower than that may be omitted. For example, if the FEV1 level never fell below 0.65, entries with keys '0.65' and '0.5' can be absent from the dictionary.
+      - "start" is intended to represent the transplantation date, but the code does not use this entry;
+      - The convention used in the code is that two scans of the same patient with the same date are treated as "copies". If there are three scans with the same date, they contribute as much to the final score as a single scan which was the only scan with its date. Such situations (multiple scans with the same date) might appear, for example, when certain acquisition was reconstructed once with the lung kernel and once with the standard kernel.
 ### The split map
   The split map for synthetic data is located in file `PatientData/split_map.json`; Example entries look like this:\
 ```
@@ -108,14 +113,20 @@ The training/test data format is best inspected by viewing the synthetic data ge
 "patient_03": 1,
 ```
 To each patient identifier, it assigns an integer that denotes the split in which the patient is assigned to the test set.
-4. The scan files;\
+### The scan files
 They take the form of three-dimensional numpy arrays, where the dimensions are in the following order: Vertical (Z), Anterior-Posterior (Y), Medio-Lateral (X); This results in storing transverse slices of a scan in contiguous fragments of the file.
 
-## Preparing CT scans for training
-Scans in DICOM format can be converted to the desired format using the `preproc_scan.py` script. It is called as follows:\
-`python3 preproc_scan.py --root_dir <root_dir> --outfile <out_file.npy> --scan_db <scan_database.json> --patient <patient_id> --infiles <infile_1.dicom> ... <infile_n.dicom>`\
+## Preparing the data for training
+Scans in DICOM format can be converted to the desired format using the `preproc_scan.py` script. When pre-processing the scans the script can also create or update [scan data base file](#the-scan-data-base). It is called as follows:\
+`python3 preproc_scan.py --root_dir <root_dir> --outfile <out_file.npy> [--scan_db <scan_database.json> --patient <patient_id>] --infiles <infile_1.dicom> ... <infile_n.dicom>`\
 where:\
    - `root_dir` is the root directory to be prepended to the local path of the output file `out_file`; this root part of the path is not stored in the `scan_database`
    - `outfile` is the local path to the output file in the numpy format
-   - `scan_database` is the path to [the file that contains the information about individual scans](#the-scan-data-base); if the file exists, it will be updated; if the specific entry already exists, it will not be overwritten unless `--overwrite` has been specified
+   - `scan_database` is the path to [the file that contains the information about individual scans](#the-scan-data-base); if the file exists, it will be updated; if the specific entry already exists, it will not be overwritten unless `--overwrite` has been specified; The scan data base is updated with the following information:
+     - the patient_id specified as an argument to the `--patient` option
+     - the date of the scan, extracted from the dicom input file; it can be substituted by specifying the date as follows: `--date YYYY-MM-DD`
+     - the scanner brand and type, extracted from the dicom input file; it can be substituted by by specifying the scanner brand and type as follows: `--scanner <scanner-description-string>`
    - `patient_id` is the text identifier to be assigned to the patient; the same identifiers need to be used in [the patient data base file](#the-patient-data-base)
+   - the argument `--infiles` is followed with a sequence of dicom files constituting one scan.
+
+We do not offer a script for preparing the [file containing patient class and FEV1 level dates](#the-patient-data-base), since there is no standard format for this information. Please write a script for collecting this information from your data sources, or prepare this file manually.
