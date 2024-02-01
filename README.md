@@ -38,7 +38,7 @@ The script generates a considerable volume of data in the `PatientData` folder. 
 5. Watch the resulting performance using the `analyseResults.ipynb` jupyter notebook
 
 # Training on own CT scans
-We first describe the [data format](#data-format), then discuss [the script for converting dicom data into the desired format](#preparing-the-data-for-training), next introduce the [training script](#the-training-script) and the [prediction script](#prediction-script), and close this section with a reference to [analysing the results with the included juputer notebook](#analyse-results).
+We first describe the [data format](#data-format), then discuss [the script for converting dicom data into the desired format](#preparing-the-data-for-training), next introduce the [training script](#training) and the [prediction script](#prediction), and close this section with a reference to [analysing the results with the included juputer notebook](#analysing-results).
 
 ## Data format
 The training/test data format is best inspected by viewing the synthetic data generated as described above. It comprises:
@@ -130,3 +130,53 @@ where:\
    - the argument `--infiles` is followed with a sequence of dicom files constituting one scan.
 
 We do not offer a script for preparing the [file containing patient class and FEV1 level dates](#the-patient-data-base), since there is no standard format for this information. Please write a script for collecting this information from your data sources, or prepare this file manually.
+
+[The split map](#the-split-map) can be generated with the `split_patient_set.py` script, called as follows:\
+`python3 split_patient_set.py <patient_db> <no_splits> <output_file>`\
+where:
+   - `patient_db` is the json file containing the [patient data base](#the-patient-data-base)
+   - `no_splits`, int, is the requested number of splits
+   - `output_file` is the name of the output json file to which the split map should be written.
+
+## Training
+The training script is run as follows:\
+`python3 train.py <split_num> <scan_db> <patient_db> <split_map> <root_dir> <log_dir>`\
+where:
+   - `split_num`, integer, is the number of the test split; scans of patients assigned to this test split are not used for training;
+   - `scan_db` is the json file containing the [scan data base](#the-scan-data-base);
+   - `patient_db` is the json file containing the [patient data base](#the-patient-data-base);
+   - `split_map` is the json file containing the [split map](#the-split-map);
+   - `root_dir` is the path prefix for all the scans listed in the scan data base;
+   - `log_dir` is the path to the training log directory;
+
+The following log files can be monitored during training:
+   - `<log_dir>\log_train_basic.txt` contains the total loss function; the average value is reported per epoch.
+   - `<log_dir>\log_train_precedence.txt` contains the loss function computed for the auxiliary temporal precedence prediction task; the average value is reported per epoch;
+   - `<log_dir>\logF1_train_classif.txt` contains the F1/Dice/Czekanowski score for the primary task of scan classification, computed for the entire training set over last training epoch; the first reported value is the score resulting from best threshold, the second value results from applying to the log-likelihood a fixed threshold of 0.
+
+The logged values can be conveniently plotted with gnuplot, for example:\
+`gnuplot -e "set xlabel \"epoch number\"; set ylabel \"loss value\"; set grid; plot \"<log_dir>/log_train_basic.txt\" u 1 t \"total loss\", \"<log_dir>/log_train_precedence.txt\" u 1 t \"precedence loss\"; pause -1"`
+
+The training script and the command lines arguments used to run it are stored in the `<log_dir>` directory as `setup_script.py` and `args.json`, respectively. This facilitates re-producing the experiment when hyper-parameters have been changed.
+
+When training terminates, or is interrupted, the state of the deep network and the optimizer are stored in `<log_dir>/net_last.pth` and `<log_dir>/optim_last.pth`, respectively. If interrupted, training can be continued by starting the training script with the `--prev_log_dir <log_dir>` argument.
+
+## Prediction
+To produce prediction for a single scan, run
+`python3 predict.py <net_path> <scan_file>`\
+where:
+   - `net_path` is the path to the trained network, typically `<log_dir>/net_last.pth`,
+   - `scan_file` is the path to a numpy file containing a [pre-processed](#preparing-the-data-for-training) scan.
+
+To produce prediction for an entire test split, run
+`python3 predict_split.py <root_dir> <scan_db> <split_map> <split_num> <net_path> <output_file> [--cuda]`\
+where:
+   - `root_dir` is the path prefix for all the scans listed in the scan data base;
+   - `scan_db` is the json file containing the [scan data base](#the-scan-data-base);
+   - `split_map` is the json file containing the [split map](#the-split-map);
+   - `split_num`, integer, is the number of the test split; only scans of patients assigned to this test split are processed;
+   - `net_path` is the path to the trained network, typically `<log_dir>/net_last.pth`;
+   - `output_file` is the name of the numpy file where a dictionary of entries scan_name:network_output will be written, typically `<log_dir>/output_last.npy`;
+
+## Analysing results
+Use the jupyter notebook [analyseResults.ipynb](http://github.com/mkozinski/BOSDetection/analyseResults.ipynb) to plot the ROC curves and compute the AUC.
