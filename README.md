@@ -178,9 +178,9 @@ where:
    - `net_path` is the path to the trained network, typically `<log_dir>/net_last.pth`;
    - `output_file` is the name of the numpy file where a dictionary of entries scan_name:network_output will be written, typically `<log_dir>/output_last.npy`;
 
+## Analysing results
+Use the jupyter notebook [analyseResults.ipynb](http://github.com/mkozinski/BOSDetection/analyseResults.ipynb) to plot the ROC curves and compute the AUC.
+
 # Funding
 
 This project received funding from the FWF Austrian Science Fund's Lise Meitner Program, project number M3374.
-
-## Analysing results
-Use the jupyter notebook [analyseResults.ipynb](http://github.com/mkozinski/BOSDetection/analyseResults.ipynb) to plot the ROC curves and compute the AUC.
