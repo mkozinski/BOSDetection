@@ -162,13 +162,13 @@ The training script and the command lines arguments used to run it are stored in
 When training terminates, or is interrupted, the state of the deep network and the optimizer are stored in `<log_dir>/net_last.pth` and `<log_dir>/optim_last.pth`, respectively. If interrupted, training can be continued by starting the training script with the `--prev_log_dir <log_dir>` argument.
 
 ## Prediction
-To produce prediction for a single scan, run
+To produce prediction for a single scan, run\
 `python3 predict.py <net_path> <scan_file>`\
 where:
    - `net_path` is the path to the trained network, typically `<log_dir>/net_last.pth`,
    - `scan_file` is the path to a numpy file containing a [pre-processed](#preparing-the-data-for-training) scan.
 
-To produce prediction for an entire test split, run
+To produce prediction for an entire test split, run\
 `python3 predict_split.py <root_dir> <scan_db> <split_map> <split_num> <net_path> <output_file> [--cuda]`\
 where:
    - `root_dir` is the path prefix for all the scans listed in the scan data base;
