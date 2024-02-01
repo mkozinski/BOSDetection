@@ -159,7 +159,7 @@ The logged values can be conveniently plotted with gnuplot, for example:\
 
 The training script and the command lines arguments used to run it are stored in the `<log_dir>` directory as `setup_script.py` and `args.json`, respectively. This facilitates re-producing the experiment when hyper-parameters have been changed.
 
-When training terminates, or is interrupted, the state of the deep network and the optimizer are stored in `<log_dir>/net_last.pth` and `<log_dir>/optim_last.pth`, respectively. If interrupted, training can be continued by starting the training script with the `--prev_log_dir <log_dir>` argument.
+When training terminates, or is interrupted, the state of the deep network and the optimizer are stored in `<log_dir>/net_last.pth` and `<log_dir>/optim_last.pth`, respectively. If interrupted, training can be continued by starting the training script with the `--prev_log_dir <prev_log_dir>` argument.
 
 ## Prediction
 To produce prediction for a single scan, run\
