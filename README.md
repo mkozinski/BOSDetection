@@ -60,42 +60,42 @@ The training/test data format is best inspected by viewing the synthetic data ge
    -  the field "patient" contains the patient identifier, a string;
    -  the field "scanner" contains the name of the device used to acquire the scan.
 ### The patient data base
-    The patient data base for synthetic data is located in file `PatientData/patient_database.json`; Example entries look like this:\
-    ```
-    "patient_18": {
-      "label": 0
-    },
-    "patient_19": {
-      "FEV1_level_dates": {
-          "0.5": {
-              "day": 9,
-              "month": 12,
-              "year": 1995
-          },
-          "0.65": {
-              "day": 23,
-              "month": 7,
-              "year": 1993
-          },
-          "0.8": {
-              "day": 23,
-              "month": 7,
-              "year": 1993
-          },
-          "0.9": {
-              "day": 27,
-              "month": 3,
-              "year": 1992
-          },
-          "start": {
-              "day": 19,
-              "month": 11,
-              "year": 1990
-          }
+The patient data base for synthetic data is located in file `PatientData/patient_database.json`; Example entries look like this:
+```
+"patient_18": {
+  "label": 0
+},
+"patient_19": {
+  "FEV1_level_dates": {
+      "0.5": {
+          "day": 9,
+          "month": 12,
+          "year": 1995
       },
-      "label": 1
-    }
-    ```
+      "0.65": {
+          "day": 23,
+          "month": 7,
+          "year": 1993
+      },
+      "0.8": {
+          "day": 23,
+          "month": 7,
+          "year": 1993
+      },
+      "0.9": {
+          "day": 27,
+          "month": 3,
+          "year": 1992
+      },
+      "start": {
+          "day": 19,
+          "month": 11,
+          "year": 1990
+      }
+  },
+  "label": 1
+}
+```
    For the patient data base, keys take the form of patient identifiers. The values of dictionary entries are:
    -  the field "label"; 0&rarr; patient that did not develop the diseae; 1&rarr; patient that developed the disease, but early scans might show no symptoms;
    -  for the patients with "label"==1, a field called "FEV1_level_dates", containing the dates at which the patient's lung function decreased below pre-defined levels: 0.9, 0.8, 0.65, 0.5 of the "best value", taken to be the average of two best measurements taken at least 3 weeks apart.
@@ -105,7 +105,7 @@ The training/test data format is best inspected by viewing the synthetic data ge
       - "start" is intended to represent the transplantation date, but the code does not use this entry;
       - The convention used in the code is that two scans of the same patient with the same date are treated as "copies". If there are three scans with the same date, they contribute as much to the final score as a single scan which was the only scan with its date. Such situations (multiple scans with the same date) might appear, for example, when certain acquisition was reconstructed once with the lung kernel and once with the standard kernel.
 ### The split map
-  The split map for synthetic data is located in file `PatientData/split_map.json`; Example entries look like this:\
+The split map for synthetic data is located in file `PatientData/split_map.json`; Example entries look like this:
 ```
 "patient_00": 0,
 "patient_01": 1,
