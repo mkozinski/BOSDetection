@@ -16,9 +16,9 @@ from net import MyNet
 def preproc(testscan):
 
     img=testscan
-#    # if need to save memory, select every n-th slice, for example
-#    n=4
-#    img=np.ascontiguousarray(img[int(n//2)::n])
+    # if need to save memory, select every n-th slice, for example
+    n=4
+    img=np.ascontiguousarray(img[int(n//2)::n])
 
     # central crop of the closest size divisible by 16
     divisor=16
