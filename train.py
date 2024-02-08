@@ -86,17 +86,33 @@ def loadfun(fname):
   fullname=path.join(a.root_dir,fname)
   return np.load(fullname,mmap_mode='r')
 
+#def precedenceLoss(x,y,min_days_diff):
+#  x=x.reshape(x.shape[0]//2,2)
+#  y=y.reshape(y.shape[0]//2,2)
+#  days_diff=(y[:,1]-y[:,0])
+#
+#  # this should never happen:
+#  incorrect = (-min_days_diff < days_diff) & (days_diff < min_days_diff)
+#  assert torch.all(incorrect==0)
+#
+#  t = days_diff>=min_days_diff
+#  ce=nn.functional.cross_entropy(x,t.to(torch.long))
+#  return ce 
+
 def precedenceLoss(x,y,min_days_diff):
-  x=x.reshape(x.shape[0]//2,2)
-  y=y.reshape(y.shape[0]//2,2)
-  days_diff=(y[:,1]-y[:,0])
 
-  # this should never happen:
-  incorrect = (-min_days_diff < days_diff) & (days_diff < min_days_diff)
-  assert torch.all(incorrect==0)
+  date=y
+  datediff=(date[0::2]-date[1::2])
 
-  t = days_diff>=min_days_diff
-  ce=nn.functional.cross_entropy(x,t.to(torch.long))
+  ignore= (-min_days_diff < datediff) & (datediff < min_days_diff)
+  assert torch.all(ignore==0)
+
+  t=datediff >= min_days_diff
+  
+  diff=nn.functional.pad(x[::2]-x[1::2],(1,0))
+
+  ce=nn.functional.cross_entropy(diff,t.to(torch.long))
+
   return ce 
 
 def classifLoss(x,y):
