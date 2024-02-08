@@ -213,7 +213,7 @@ if __name__ == '__main__':
   logger_train=LoggerComposite(
     [logger_train_basic,logger_train_precedence,logger_train_classif,])
   
-  print("log directory: {}".format(a.log_dir)
+  print("log directory: {}".format(a.log_dir))
 
   # training
   trn=trainer(net, train_loader, optimizer, loss, logger_train, None, None,
