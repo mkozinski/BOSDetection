@@ -35,7 +35,7 @@ The script generates a considerable volume of data in the `PatientData` folder. 
    - Interrupt the training with `ctr+C`
 4. Generate predictions:\
    `(export CUDA_VISIBLE_DEVICES=0 SPLIT=1; python3 predict_split.py ./PatientData/ ./PatientData/scan_database.json ./PatientData/split_map.json ${SPLIT} ./result_v0_test/log_split_${SPLIT}/net_last.pth ./result_v0_test/log_split_${SPLIT}/output_last.npy)`
-5. Watch the resulting performance using the `analyseResults.ipynb` jupyter notebook
+5. Watch the resulting performance using the `analyseResults.ipynb` jupyter notebook; Expect random performance - this is just a sanity check.
 
 # Training on own CT scans
 We first describe the [data format](#data-format), then discuss [the script for converting dicom data into the desired format](#preparing-the-data-for-training), next introduce the [training script](#training) and the [prediction script](#prediction), and close this section with a reference to [analysing the results with the included juputer notebook](#analysing-results).
